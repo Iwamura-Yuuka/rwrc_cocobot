@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="bagfile" default="ikuta/o-cam-auto.bag"/>
+    <arg name="map_pcd" default="ikuta_outdoor.pcd"/>
+    <arg name="use_downsampled_map" default="false"/>
+    <arg name="speed" default="1"/>
+
+    <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_to_pointcloud" args="$(env HOME)/pcd/$(arg map_pcd)" output="screen">
+        <param name="frame_id" value="map"/>
+        <param name="latch" value="true"/>
+        <remap from="/cloud_pcd" to="/map_cloud"/>
+    </node>
+    <node pkg="amsl_navigation_utils" type="map_cloud_downsampler" name="map_cloud_downsampler" output="screen" respawn="true" if="$(arg use_downsampled_map)">
+        <param name="leaf_size" value="$(arg leaf_size)"/>
+    </node>
+
+    <!--- velodyene -->
+    <include file="$(find velodyne_pointcloud)/launch/VLP-32C_points.launch"/>
+
+    <!--- bagplay -->
+    <node pkg="rosbag" type="play" name="bagplay" args="-r $(arg speed) $(env HOME)/bagfiles/$(arg bagfile) --clock" required="true"/>
+
+    <!--- rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find rwrc_cocobot)/config/rviz/bagplay.rviz" required="true"/>
+</launch>
