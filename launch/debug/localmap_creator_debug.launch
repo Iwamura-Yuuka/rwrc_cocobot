@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- local map creator -->
+    <arg name="local_map_expansion" default="0.075" doc="[m]"/>
+    <!-- bag play -->
+    <arg name="bagfile" default="ikuta/o-cam-auto.bag"/>
+    <arg name="map_pcd" default="ikuta_outdoor.pcd"/>
+    <arg name="use_downsampled_map" default="false"/>
+
+    <!-- localmap creator -->
+    <include file="$(find rwrc_cocobot)/launch/common/localmap_creator.launch">
+        <arg name="local_map_expansion" value="$(arg local_map_expansion)"/>
+    </include>
+
+    <!-- bag play -->
+    <include file="$(find rwrc_cocobot)/launch/debug/bagplay.launch">
+        <arg name="bagfile" value="$(arg bagfile)"/>
+        <arg name="map_pcd" value="$(arg map_pcd)"/>
+        <arg name="use_downsampled_map" value="$(arg use_downsampled_map)"/>
+        <arg name="speed" value="1"/>
+    </include>
+
+    <!-- rviz -->
+    <node pkg="rviz" type="rviz" name="localmap_rviz" args="-d $(find rwrc_cocobot)/config/rviz/localmap.rviz" required="true"/>
+    <node pkg="rviz" type="rviz" name="dynamic_cloud_detector_rviz" args="-d $(find rwrc_cocobot)/config/rviz/dynamic_cloud_detector.rviz" required="true"/>
+    <node pkg="rviz" type="rviz" name="static_localmap_rviz" args="-d $(find rwrc_cocobot)/config/rviz/static_localmap.rviz" required="true"/>
+</launch>

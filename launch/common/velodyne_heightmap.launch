@@ -1,0 +1,18 @@
+<!-- -*- mode: XML -*- -->
+<!-- run velodyne_height_map/HeightMapNodelet in a nodelet manager
+
+     $Id$
+  -->
+
+<launch>
+    <arg name="input_topic" default="/velodyne_points"/>
+
+    <node pkg="nodelet" type="nodelet" name="heightmap_nodelet"
+        args="load velodyne_height_map/HeightMapNodelet velodyne_nodelet_manager">
+        <param name="cell_size" value="0.25"/>
+        <param name="full_clouds" value="true"/>
+        <param name="grid_dimensions" value="100"/>
+        <param name="height_threshold" value="0.1"/>
+        <remap from="/velodyne_points" to="$(arg input_topic)"/>
+    </node>
+</launch>

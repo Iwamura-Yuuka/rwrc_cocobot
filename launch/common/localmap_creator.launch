@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="local_map_expansion" default="0.03" doc="[m]"/>
+
+    <!-- scan2pcl -->
+    <node pkg="localmap_creator" type="scan2pcl" name="front_lidar_pc">
+        <remap from="/scan" to="/front_laser/scan"/>
+        <remap from="/cloud" to="/front_laser/cloud"/>
+    </node>
+    <node pkg="localmap_creator" type="scan2pcl" name="rear_lidar_pc">
+        <remap from="/scan" to="/rear_laser/scan"/>
+        <remap from="/cloud" to="/rear_laser/cloud"/>
+    </node>
+    <node pkg="localmap_creator" type="scan2pcl" name="velodyne_pc">
+        <!-- <remap from="/cloud" to="/scan/cloud"/> -->
+    </node>
+
+    <!-- ============= static and dynamic ============= -->
+    <!-- extract pc from velodyne -->
+    <node pkg="localmap_creator" type="pc_extractor" name="pc_extractor" output="screen">
+        <param name="max_height" value="0.65"/>
+        <param name="min_height" value="0.3"/>
+        <remap from="/cloud_in" to="/velodyne_points"/>
+        <remap from="/cloud_out" to="/extracted_velodyne_points"/>
+    </node>
+    <node pkg="localmap_creator" type="pc_extractor" name="pc_extractor_2" output="screen">
+        <param name="max_height" value="0.65"/>
+        <param name="min_height" value="0.03"/>
+        <remap from="/cloud_in" to="/realsense/depth/color/points"/>
+        <remap from="/cloud_out" to="/extracted_realsense_points"/>
+    </node>
+
+    <!-- merge pc -->
+    <node pkg="localmap_creator" type="pc_merger" name="pc_merger0" output="screen">
+        <param name="hz" value="20"/>
+        <param name="cloud_num" value="5"/>
+        <param name="cloud_count_th" value="1"/>
+        <remap from="/cloud0" to="/front_laser/cloud"/>
+        <remap from="/cloud1" to="/rear_laser/cloud"/>
+        <remap from="/cloud2" to="/scan/cloud"/>
+        <remap from="/cloud3" to="/extracted_velodyne_points"/>
+        <remap from="/cloud4" to="/extracted_realsense_points"/>
+        <remap from="/cloud" to="/merged_points"/>
+    </node>
+
+    <!-- Create localmap -->
+    <node pkg="localmap_creator" type="simple_localmap_creator" name="simple_localmap_creator">
+        <param name="width" value="18.0"/>
+        <param name="max_height" value="1.2"/>
+        <param name="min_height" value="0.0"/>
+        <param name="resolution" value="0.025"/>
+        <param name="leaf_size" value="0.05"/>
+        <param name="expand_radius" value="$(arg local_map_expansion)"/>
+        <remap from="/cloud" to="/merged_points"/>
+    </node>
+
+    <!-- ============= static only ============= -->
+    <!-- velodyne heightmap -->
+    <include file="$(find rwrc_cocobot)/launch/common/velodyne_heightmap.launch"/>
+
+    <!-- dynamic cloud detector -->
+    <node pkg="dynamic_cloud_detector" type="dynamic_cloud_detector" name="dynamic_cloud_detector">
+        <param name="width" value="40.0"/>
+        <param name="resolution" value="0.2"/>
+        <param name="occupancy_threshold" value="0.2"/>
+        <param name="beam_num" value="720"/>
+        <param name="skip_scan_flag" value="false"/>
+        <param name="log_odds_increase" value="0.4"/>
+        <param name="log_odds_decrease" value="0.2"/>
+        <remap from="/odom/complement" to="/odom"/>
+    </node>
+
+    <!-- Create static localmap -->
+    <node pkg="localmap_creator" type="simple_localmap_creator" name="static_localmap_creator">
+        <param name="width" value="18.0"/>
+        <param name="max_height" value="1.2"/>
+        <param name="min_height" value="0.0"/>
+        <param name="resolution" value="0.025"/>
+        <param name="leaf_size" value="0.05"/>
+        <param name="expand_radius" value="$(arg local_map_expansion)"/>
+        <remap from="/cloud" to="/cloud/static"/>
+        <remap from="/local_map" to="/static_local_map"/>
+        <remap from="/local_map/expand" to="/static_local_map/expand"/>
+    </node>
+
+    <!-- road projection -->
+    <!-- <node pkg="localmap_creator" type="virtual_road_projector" name="virtual_road_projector">
+        <param name="allowable_num_of_not_received" value="5"/>
+        <param name="robot_radius" value="0.3"/>
+        <param name="wall_thickness" value="0.1"/>
+        <remap from="/local_map" to="/local_map/expand"/>
+        <remap from="/local_map/projected" to="/local_map/expand/projected"/>
+    </node> -->
+</launch>
