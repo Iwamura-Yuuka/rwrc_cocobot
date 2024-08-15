@@ -21,5 +21,5 @@
     <node pkg="rosbag" type="play" name="bagplay" args="-r $(arg speed) $(env HOME)/bagfiles/$(arg bagfile) --clock" required="true"/>
 
     <!--- rviz -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find rwrc_cocobot)/config/rviz/bagplay.rviz" required="true"/>
+    <node pkg="rviz" type="rviz" name="bagplay_rviz" args="-d $(find rwrc_cocobot)/config/rviz/bagplay.rviz" required="true"/>
 </launch>
